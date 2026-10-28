@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Portal - Events</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f8f9fa;
+    }
+
+    header {
+      background-color: #003366;
+      color: white;
+      padding: 15px 20px;
+      text-align: center;
+    }
+
+    nav ul {
+      padding: 0;
+      list-style: none;
+      margin: 0;
+    }
+
+    nav ul li {
+      display: inline;
+      margin: 0 10px;
+    }
+
+    nav ul li a {
+      color: white;
+      text-decoration: none;
+    }
+
+    .event-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .event-card {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      transition: transform 0.3s;
+    }
+
+    .event-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .event-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+    }
+
+    .event-card-content {
+      padding: 15px;
+    }
+
+    .event-card-content h2 {
+      margin-top: 0;
+    }
+
+    .event-card-content p {
+      margin: 5px 0;
+    }
+
+    .registration-form,
+    .feedback-form {
+      background-color: white;
+      padding: 20px;
+      margin: 30px auto;
+      width: 90%;
+      max-width: 400px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .registration-form input,
+    .registration-form select,
+    .feedback-form input,
+    .feedback-form textarea {
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    footer {
+      background-color: #003366;
+      color: white;
+      text-align: center;
+      padding: 15px 0;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Student Event Portal</h1>
+    <nav>
+      <ul>
+        <li><a href="/">Back to Home</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <section id="events" class="event-list"></section>
+
+  <section class="registration-form">
+    <h2>Register for an Event</h2>
+    <form id="registrationForm">
+      <select id="eventSelect" required></select>
+      <input type="text" id="name" placeholder="Your Name" required />
+      <input type="email" id="email" placeholder="Your Email" required />
+      <input type="contact No" id="contact" placeholder="Your contact No" required />
+      <button type="submit">Register</button>
+    </form>
+    <div id="registrationMessage" style="margin-top: 10px;"></div>
+  </section>
+
+  <section class="feedback-form" id="feedbackSection" style="display: none;">
+    <h2>Feedback & Suggestions</h2>
+    <form id="feedbackForm">
+      <input type="text" id="fbName" placeholder="Your Name" required />
+      <input type="email" id="fbEmail" placeholder="Your Email" required />
+      <textarea id="feedback" placeholder="Your Feedback" required></textarea>
+      <textarea id="suggestion" placeholder="Suggestions (Optional)"></textarea>
+      <button type="submit">Submit</button>
+    </form>
+  </section>
+
+  <footer>
+    <p>© 2025 College Event Management System</p>
+  </footer>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const eventsContainer = document.getElementById("events");
+      const eventSelect = document.getElementById("eventSelect");
+
+      try {
+        const response = await fetch("/api/events");
+        const events = await response.json();
+
+        events.forEach((event, index) => {
+          const card = document.createElement("div");
+          card.className = "event-card";
+          card.innerHTML = `
+            <img src="${event.image || 'https://via.placeholder.com/300x180'}" alt="${event.title}" />
+            <div class="event-card-content">
+              <h2>${event.title}</h2>
+              <p><strong>Date:</strong> ${new Date(event.date).toLocaleString()}</p>
+              <p><strong>Location:</strong> ${event.location}</p>
+              <p>${event.description}</p>
+            </div>
+          `;
+          eventsContainer.appendChild(card);
+
+          const option = document.createElement("option");
+          option.value = index;
+          option.textContent = event.title;
+          eventSelect.appendChild(option);
+        });
+
+        // Register for Event
+        document.getElementById("registrationForm").addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const selectedEvent = events[eventSelect.value];
+          const name = document.getElementById("name").value;
+          const email = document.getElementById("email").value;
+          const resultArea = document.getElementById("registrationMessage");
+
+          try {
+            const res = await fetch("/register", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                eventTitle: selectedEvent.title,
+                eventDate: selectedEvent.date,
+                name,
+                email,
+              })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+              resultArea.innerHTML = `<p style="color:green;">Successfully registered for ${selectedEvent.title}!</p>`;
+              document.getElementById("feedbackSection").style.display = "block"; // Show feedback form
+            } else {
+              resultArea.innerHTML = `<p style="color:red;">${data.message}</p>`;
+            }
+
+            e.target.reset();
+          } catch (err) {
+            resultArea.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+          }
+        });
+
+        // Submit Feedback
+        document.getElementById("feedbackForm").addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const name = document.getElementById("fbName").value;
+          const email = document.getElementById("fbEmail").value;
+          const feedback = document.getElementById("feedback").value;
+          const suggestion = document.getElementById("suggestion").value;
+
+          try {
+            const res = await fetch("/feedback", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name, email, feedback, suggestion })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+              alert("Thank you for your feedback!");
+              e.target.reset();
+            } else {
+              alert("Error: " + data.message);
+            }
+          } catch (err) {
+            alert("Error: " + err.message);
+          }
+        });
+
+      } catch (err) {
+        eventsContainer.innerHTML = "<p>Error loading events. Please try again later.</p>";
+        console.error("Failed to fetch events:", err);
+      }
+    });
+  </script>
+</body>
+
+</html>
+

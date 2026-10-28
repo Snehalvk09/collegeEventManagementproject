@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AIDS Department Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e3f2fd, #ffffff);
+            margin: 0;
+            padding: 0;
+        }
+
+        .dashboard {
+            max-width: 900px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #0d47a1;
+            margin-bottom: 30px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .actions button {
+            padding: 12px 24px;
+            font-size: 15px;
+            cursor: pointer;
+            border: none;
+            background-color: #1976d2;
+            color: white;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        .actions button:hover {
+            background-color: #0d47a1;
+        }
+
+        .section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .section h2 {
+            color: #333;
+            border-bottom: 2px solid #1976d2;
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+        }
+
+        .event, .feedback {
+            border: 1px solid #cfd8dc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
+        }
+
+        label {
+            display: block;
+            margin-top: 12px;
+            font-weight: bold;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        .btn-submit {
+            margin-top: 20px;
+            padding: 12px 20px;
+            background-color: #388e3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-submit:hover {
+            background-color: #2e7d32;
+        }
+
+        .event button {
+            margin-top: 10px;
+            padding: 6px 12px;
+            font-size: 14px;
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .event button:hover {
+            background-color: #b71c1c;
+        }
+
+        @media screen and (max-width: 600px) {
+            .actions {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <h1>AIDS Department Dashboard</h1>
+
+        <div class="actions">
+            <button onclick="showSection('addEvent')">➕ Add Event</button>
+            <button onclick="showSection('registrations')">👥 View Registrations</button>
+            <button onclick="showSection('feedback')">💬 View Feedback</button>
+            <button onclick="logout()">🚪 Logout</button>
+        </div>
+
+        <!-- Add Event Section -->
+        <div class="section" id="addEvent">
+            <h2>Add New Event</h2>
+            <form id="eventForm">
+                <label for="title">Event Title:</label>
+                <input type="text" id="title" required>
+                <label for="date">Event Date:</label>
+                <input type="date" id="date" required>
+                <label for="desc">Description:</label>
+                <textarea id="desc" rows="3" required></textarea>
+                <button class="btn-submit" type="submit">📩 Submit Event</button>
+            </form>
+
+            <div style="margin-top: 40px;">
+                <h2>Your Events</h2>
+                <div id="eventList">Loading...</div>
+            </div>
+        </div>
+
+        <!-- View Registrations Section -->
+        <div class="section" id="registrations">
+            <h2>Registered Students</h2>
+            <div id="regList">Loading...</div>
+        </div>
+
+        <!-- View Feedback Section -->
+        <div class="section" id="feedback">
+            <h2>Feedback</h2>
+            <div id="feedbackList">Loading...</div>
+        </div>
+    </div>
+
+    <script>
+        function showSection(sectionId) {
+            document.querySelectorAll(".section").forEach(div => {
+                div.style.display = "none";
+            });
+            document.getElementById(sectionId).style.display = "block";
+
+            if (sectionId === "registrations") fetchRegistrations();
+            if (sectionId === "feedback") fetchFeedback();
+            if (sectionId === "addEvent") fetchEvents();
+        }
+
+        function logout() {
+            window.location.href = "/";
+        }
+
+        document.getElementById("eventForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const res = await fetch('/api/events', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    title: document.getElementById("title").value,
+                    date: document.getElementById("date").value,
+                    description: document.getElementById("desc").value,
+                    department: "AIDS"
+                })
+            });
+
+            const data = await res.json();
+            alert(data.message || "Event added successfully!");
+            e.target.reset();
+            fetchEvents();
+        });
+
+        async function fetchEvents() {
+            const res = await fetch('/api/events');
+            const data = await res.json();
+
+            const eventDiv = document.getElementById("eventList");
+            eventDiv.innerHTML = "";
+
+            const aidsEvents = data.filter(e => e.department === "AIDS");
+
+            if (aidsEvents.length === 0) {
+                eventDiv.innerHTML = "<p>No events found for AIDS department.</p>";
+                return;
+            }
+
+            aidsEvents.forEach(event => {
+                eventDiv.innerHTML += `
+                    <div class="event">
+                        <strong>${event.title}</strong> on ${event.date}<br>
+                        <p>${event.description}</p>
+                        <button onclick="deleteEvent('${event._id}')">🗑️ Delete</button>
+                    </div>
+                `;
+            });
+        }
+
+        async function deleteEvent(id) {
+            if (confirm("Are you sure you want to delete this event?")) {
+                const res = await fetch(`/api/events/${id}`, {
+                    method: "DELETE"
+                });
+                const data = await res.json();
+                alert(data.message || "Event deleted successfully!");
+                fetchEvents(); // reload event list
+            }
+        }
+
+        async function fetchRegistrations() {
+            const res = await fetch('/registrations');
+            const data = await res.json();
+
+            const regDiv = document.getElementById("regList");
+            regDiv.innerHTML = "";
+
+            const aidsOnly = data.filter(r => r.department === "AIDS");
+
+            if (aidsOnly.length === 0) {
+                regDiv.innerHTML = "<p>No registrations found for AIDS department.</p>";
+                return;
+            }
+
+            aidsOnly.forEach(r => {
+                regDiv.innerHTML += `
+                    <div class="event">
+                        <strong>${r.name}</strong> registered for <b>${r.eventTitle}</b><br>
+                        <small>Email: ${r.email}</small>
+                    </div>
+                `;
+            });
+        }
+
+        async function fetchFeedback() {
+            const res = await fetch('/feedbacks');
+            const data = await res.json();
+
+            const fbDiv = document.getElementById("feedbackList");
+            fbDiv.innerHTML = "";
+
+            data.forEach(f => {
+                fbDiv.innerHTML += `
+                    <div class="feedback">
+                        <strong>${f.name}</strong>: ${f.feedback}<br>
+                        <small>Suggestion: ${f.suggestion || 'N/A'}</small>
+                    </div>
+                `;
+            });
+        }
+
+        window.onload = () => {
+            fetchEvents(); // Show events initially
+        };
+    </script>
+</body>
+</html>
+
+

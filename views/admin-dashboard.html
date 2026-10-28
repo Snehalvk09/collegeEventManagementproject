@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f4f8;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: #0d47a1;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .dashboard {
+            max-width: 1100px;
+            margin: 30px auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .nav-buttons button {
+            padding: 12px 20px;
+            font-size: 16px;
+            background: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .nav-buttons button:hover {
+            background: #0d47a1;
+        }
+        .section {
+            display: none;
+        }
+        h2 {
+            border-bottom: 2px solid #1976d2;
+            padding-bottom: 6px;
+            margin-bottom: 15px;
+        }
+        .card {
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .form-field {
+            margin-bottom: 15px;
+        }
+        input, select {
+            padding: 10px;
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        .btn-submit {
+            background: #388e3c;
+            color: white;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .btn-submit:hover {
+            background: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Admin Dashboard</h1>
+</header>
+<div class="dashboard">
+    <div class="nav-buttons">
+        
+        <button onclick="showSection('events')">📅 Manage Events</button>
+        <button onclick="showSection('coordinators')">🧑‍💼 Manage Coordinators</button>
+        <button onclick="showSection('registrations')">📝 View Registrations</button>
+        <button onclick="showSection('feedback')">💬 View Feedback</button>
+        <button onclick="logout()">🚪 Logout</button>
+    </div>
+
+    
+    <div class="section" id="events">
+        <h2>📅 All Department Events</h2>
+        <div id="eventsList">Loading...</div>
+    </div>
+
+    <div class="section" id="coordinators">
+        <h2>🧑‍💼 Coordinator Management</h2>
+        <form id="coordForm">
+            <div class="form-field">
+                <label>Username:</label>
+                <input type="text" id="cUsername" required>
+            </div>
+            <div class="form-field">
+                <label>Password:</label>
+                <input type="password" id="cPassword" required>
+            </div>
+            <div class="form-field">
+                <label>Department:</label>
+                <select id="cDept">
+                    <option value="CSE">CSE</option>
+                    <option value="IT">IT</option>
+                    <option value="ECE">ECE</option>
+                    <option value="Mechanical">Mechanical</option>
+                    <option value="AIDS">AIDS</option>
+                </select>
+            </div>
+            <button class="btn-submit" type="submit">Add Coordinator</button>
+        </form>
+        <div id="coordList" style="margin-top: 20px;">Loading...</div>
+    </div>
+
+    <div class="section" id="registrations">
+        <h2>📝 Student Registrations</h2>
+        <div id="regList">Loading...</div>
+    </div>
+
+    <div class="section" id="feedback">
+        <h2>💬 All Feedback</h2>
+        <div id="feedbackList">Loading...</div>
+    </div>
+</div>
+
+<script>
+    function showSection(id) {
+        document.querySelectorAll(".section").forEach(sec => sec.style.display = "none");
+        document.getElementById(id).style.display = "block";
+
+        if (id === "analytics") loadAnalytics();
+        if (id === "events") loadEvents();
+        if (id === "coordinators") loadCoordinators();
+        if (id === "registrations") loadRegistrations();
+        if (id === "feedback") loadFeedback();
+    }
+
+    function logout() {
+        window.location.href = "/";
+    }
+
+    async function loadAnalytics() {
+        const res = await fetch('/admin/analytics');
+        const data = await res.json();
+        document.getElementById("analyticsContent").innerHTML = `
+            <div class="card">📅 Total Events: <b>${data.totalEvents}</b></div>
+            <div class="card">📝 Total Registrations: <b>${data.totalRegistrations}</b></div>
+            <div class="card">💬 Total Feedbacks: <b>${data.totalFeedback}</b></div>
+            <div class="card">🧑‍💼 Total Coordinators: <b>${data.totalCoordinators}</b></div>
+        `;
+    }
+
+    async function loadEvents() {
+        const res = await fetch('/api/events');
+        const data = await res.json();
+        const div = document.getElementById("eventsList");
+        div.innerHTML = "";
+
+        if (data.length === 0) return div.innerHTML = "<p>No events available.</p>";
+
+        data.forEach(event => {
+            div.innerHTML += `
+                <div class="card">
+                    <strong>${event.title}</strong> - ${event.department} (${event.date})<br>
+                    <small>${event.description}</small><br>
+                    <button onclick="deleteEvent('${event._id}')">🗑️ Delete</button>
+                </div>
+            `;
+        });
+    }
+
+    async function deleteEvent(id) {
+        if (confirm("Delete this event?")) {
+            const res = await fetch(`/api/events/${id}`, { method: "DELETE" });
+            const data = await res.json();
+            alert(data.message);
+            loadEvents();
+        }
+    }
+
+    async function loadCoordinators() {
+        const res = await fetch('/admin/coordinators');
+        const data = await res.json();
+        const div = document.getElementById("coordList");
+        div.innerHTML = "";
+
+        data.forEach(c => {
+            div.innerHTML += `
+                <div class="card">
+                    <strong>${c.username}</strong> - ${c.department}<br>
+                    <button onclick="deleteCoordinator('${c._id}')">🗑️ Delete</button>
+                </div>
+            `;
+        });
+    }
+
+    async function deleteCoordinator(id) {
+        if (confirm("Delete this coordinator?")) {
+            const res = await fetch(`/admin/coordinators/${id}`, { method: "DELETE" });
+            const data = await res.json();
+            alert(data.message);
+            loadCoordinators();
+        }
+    }
+
+    document.getElementById("coordForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const payload = {
+            username: document.getElementById("cUsername").value,
+            password: document.getElementById("cPassword").value,
+            department: document.getElementById("cDept").value
+        };
+
+        const res = await fetch('/admin/coordinators', {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        alert(data.message);
+        this.reset();
+        loadCoordinators();
+    });
+
+    async function loadRegistrations() {
+        const res = await fetch('/registrations');
+        const data = await res.json();
+        const div = document.getElementById("regList");
+        div.innerHTML = "";
+
+        data.forEach(r => {
+            div.innerHTML += `
+                <div class="card">
+                    <strong>${r.name}</strong> - ${r.eventTitle}<br>
+                    Email: ${r.email} | Dept: ${r.department}
+                </div>
+            `;
+        });
+    }
+
+    async function loadFeedback() {
+        const res = await fetch('/feedbacks');
+        const data = await res.json();
+        const div = document.getElementById("feedbackList");
+        div.innerHTML = "";
+
+        data.forEach(f => {
+            div.innerHTML += `
+                <div class="card">
+                    <strong>${f.name}</strong>: ${f.feedback}<br>
+                    <small>Suggestion: ${f.suggestion || "N/A"}</small>
+                </div>
+            `;
+        });
+    }
+
+    window.onload = () => {
+        showSection("analytics");
+    }
+</script>
+</body>
+</html>
+
+

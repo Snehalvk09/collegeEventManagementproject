@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>College Event Management System</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-image: url('/images/bg.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      color: #fff;
+    }
+
+    header {
+      background-color: rgba(0, 51, 102, 0.9);
+      color: white;
+      padding: 20px 0;
+      text-align: center;
+    }
+
+    nav {
+      background-color: rgba(0, 85, 165, 0.9);
+      padding: 10px 0;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      justify-content: center;
+      padding: 0;
+      margin: 0;
+    }
+
+    nav ul li {
+      margin: 0 20px;
+    }
+
+    nav ul li a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    nav ul li a:hover {
+      text-decoration: underline;
+    }
+
+    .hero {
+      padding: 80px 20px;
+      text-align: center;
+      background-color: rgba(0, 0, 0, 0.5);
+      border-radius: 10px;
+      margin: 30px auto;
+      width: 80%;
+      color: white;
+    }
+
+    .hero h1 {
+      font-size: 2.8rem;
+      margin-bottom: 15px;
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .sections {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 30px 10px;
+      gap: 30px;
+    }
+
+    .section-box {
+      background-color: rgba(255, 255, 255, 0.95);
+      color: #333;
+      padding: 20px;
+      width: 280px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      text-align: center;
+      transition: transform 0.3s;
+    }
+
+    .section-box:hover {
+      transform: translateY(-5px);
+    }
+
+    .section-box h2 {
+      margin-bottom: 15px;
+    }
+
+    .section-box a {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border-radius: 5px;
+      text-decoration: none;
+      margin-top: 10px;
+    }
+
+    .section-box a:hover {
+      background-color: #0056b3;
+    }
+
+    footer {
+      background-color: rgba(0, 51, 102, 0.9);
+      color: white;
+      text-align: center;
+      padding: 15px 0;
+      margin-top: 40px;
+    }
+
+    /* ✅ Event Popup Styles */
+    #eventPopup {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: rgba(0, 51, 102, 0.95);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+      z-index: 9999;
+      max-width: 300px;
+    }
+
+    #eventPopup button {
+      background-color: #007bff;
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    #eventPopup button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>College Event Management System</h1>
+  </header>
+
+  <nav>
+    <ul>
+      <li><a href="/admin-login.html">Admin Login</a></li>
+      <li><a href="/event-coordinator-login.html">Coordinator Login</a></li>
+      <li><a href="/student-login.html">Student Portal</a></li>
+    </ul>
+  </nav>
+
+  <section class="hero">
+    <h1>Welcome to the Event Portal</h1>
+    <p>Stay updated with college events, register easily, and share your feedback. This portal is designed for students, coordinators, and administrators.</p>
+  </section>
+
+  <section class="sections">
+    <div class="section-box">
+      <h2>Admin Access</h2>
+      <p>Manage all departments and events through the Admin Panel.</p>
+      <a href="/admin-login.html">Admin Login</a>
+    </div>
+
+    <div class="section-box">
+      <h2>Coordinator Access</h2>
+      <p>Login to manage events in your department.</p>
+      <a href="/event-coordinator-login.html">Coordinator Login</a>
+    </div>
+
+    <div class="section-box">
+      <h2>Student Access</h2>
+      <p>View events, register easily, and give feedback.</p>
+      <a href="/student-login.html">Student Portal</a>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2025 College Event Management System</p>
+  </footer>
+
+  <!-- ✅ Event Popup HTML -->
+  <div id="eventPopup">
+    <strong id="popupTitle"></strong>
+    <p id="popupDate"></p>
+    <button onclick="document.getElementById('eventPopup').style.display='none'">Close</button>
+  </div>
+
+  <!-- ✅ Script to fetch and display latest event -->
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const res = await fetch("/api/events"); // ← This should return event array
+        const events = await res.json();
+        if (events && events.length > 0) {
+          const latest = events[events.length - 1]; // latest event
+          document.getElementById("popupTitle").textContent = latest.title;
+          document.getElementById("popupDate").textContent = "📅 " + new Date(latest.date).toLocaleString();
+          document.getElementById("eventPopup").style.display = "block";
+        }
+      } catch (err) {
+        console.error("Failed to fetch latest event:", err);
+      }
+    });
+  </script>
+</body>
+</html>
+
